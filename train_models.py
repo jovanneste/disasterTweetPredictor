@@ -24,11 +24,14 @@ def text_pipeline_spacy(text):
 	return tokens
 
 
-#train_data['clean_text'] = train_data['text'].apply(lambda x: text_pipeline_spacy(x))
 
 one_hot_vectorizer = CountVectorizer(tokenizer=text_pipeline_spacy, binary=True)
 train_features = one_hot_vectorizer.fit_transform(train_data['text'])
 train_labels = train_data['target']
+
+test_features = one_hot_vectorizer.transform(test_data['text'])
+pickle.dump(test_features, open('test_features.sav', 'wb'))
+
 
 pickle.dump(train_features, open('train_features.sav', 'wb'))
 pickle.dump(train_labels, open('train_labels.sav', 'wb'))
