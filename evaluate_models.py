@@ -13,7 +13,7 @@ def main():
 	train_features = pickle.load(open('train_features.sav', 'rb'))
 	train_labels = pickle.load(open('train_labels.sav', 'rb'))
 
-	print(train_features.head())
+
 
 	logr_model = pickle.load(open('logr_model.sav', 'rb'))
 	

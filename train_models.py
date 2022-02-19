@@ -30,7 +30,10 @@ train_features = one_hot_vectorizer.fit_transform(train_data['text'])
 train_labels = train_data['target']
 
 test_features = one_hot_vectorizer.transform(test_data['text'])
+
+
 pickle.dump(test_features, open('test_features.sav', 'wb'))
+pickle.dump(test_data, open('test_labels.sav', 'wb'))
 
 
 pickle.dump(train_features, open('train_features.sav', 'wb'))
