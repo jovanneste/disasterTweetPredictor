@@ -7,6 +7,7 @@ from sklearn.linear_model import LogisticRegression
 import pickle
 
 
+print("Loading data...")
 
 train_data = pd.read_csv('train.csv')
 test_data = pd.read_csv('test.csv')
@@ -24,7 +25,7 @@ def text_pipeline_spacy(text):
 	return tokens
 
 
-
+print("Training models...")
 one_hot_vectorizer = CountVectorizer(tokenizer=text_pipeline_spacy, binary=True)
 train_features = one_hot_vectorizer.fit_transform(train_data['text'])
 train_labels = train_data['target']
