@@ -7,11 +7,12 @@ logr_model = pickle.load(open('logr_model.sav', 'rb'))
 
 target = logr_model.predict(test_features)
 
-
+print(len(test_labels))
 
 print(str(len(target)) + " entries")
 
-df = pd.DataFrame({'target':target})
+df = pd.DataFrame({'id':test_labels['id'], 'target':target})
+df.reset_index(drop=True)
 
 print("Some random entries: \n")
 for i in range(0,50,2):
@@ -19,4 +20,4 @@ for i in range(0,50,2):
 
 print("\nSaved to file predictions.csv")
 # saving the dataframe
-df.to_csv('predictions.csv')
+df.to_csv('predictions.csv', index=False)

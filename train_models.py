@@ -12,6 +12,7 @@ print("Loading data...")
 train_data = pd.read_csv('train.csv')
 test_data = pd.read_csv('test.csv')
 
+
 nlp = spacy.load('en_core_web_sm', disable=["ner"])
 nlp.remove_pipe('tagger')
 nlp.remove_pipe('parser')
