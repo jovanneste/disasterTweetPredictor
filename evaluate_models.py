@@ -11,13 +11,14 @@ from sklearn.metrics import fbeta_score
 def main():
 	nb_model = pickle.load(open('nb_model.sav', 'rb'))
 	logr_model = pickle.load(open('logr_model.sav', 'rb'))
+	combined_model = pickle.load(open('combined_model.sav', 'rb'))
 
 	validation_data = pickle.load(open('validation_data.sav', 'rb'))
 	validation_labels = validation_data['target']
 
 	validation_features = pickle.load(open('validation_features.sav', 'rb'))
 
-
+	one_hot_validation_features = pickle.load(open('one_hot_validation_features.sav', 'rb'))
 
 	
 	print("Evaluation of models using validation set")
@@ -25,6 +26,8 @@ def main():
 
 	print("\nNaive Bayes Classifier Accuracy: "+ str(nb_model.score(validation_features, validation_labels)))
 	print("Logistic Regression Classifier Accuracy: "+ str(logr_model.score(validation_features, validation_labels))+"\n")
+
+	print("Combined Logistic Regression Classifier Accuracy: "+ str(combined_model.score(one_hot_validation_features, validation_labels))+"\n")
 
 
 

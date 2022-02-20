@@ -4,13 +4,27 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.linear_model import LogisticRegression
 
+from sklearn.pipeline import FeatureUnion
+from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import CountVectorizer
+
+from sklearn.base import BaseEstimator, TransformerMixin
+
 import pickle
+import numpy as np
+
 
 
 print("Loading data...")
 
 train_data = pd.read_csv('train.csv')
 test_data = pd.read_csv('test.csv')
+
+
+
+train_data = train_data.replace(np.nan,' ',regex=True)
+
+
 
 random_training_data = train_data.sample(frac=1)
 
@@ -23,7 +37,6 @@ validation_data = random_training_data.iloc[train_split:, :]
 
 print('Training set contains {:d} reviews.'.format(len(train_data)))
 print('Vadlidation set contains {:d} reviews.'.format(len(validation_data)))
-#print('Test set contains {:d} reviews.'.format(len(test_data)))
 
 number_positive_train = sum(train_data['target'] == 1)
 number_positive_validation = sum(validation_data['target'] == 1)
@@ -48,6 +61,8 @@ def text_pipeline_spacy(text):
 
 
 print("Training models...")
+
+
 one_hot_vectorizer = CountVectorizer(tokenizer=text_pipeline_spacy, binary=True)
 
 train_features = one_hot_vectorizer.fit_transform(train_data['text'])
@@ -75,7 +90,42 @@ logr_model = logr.fit(train_features, train_labels)
 pickle.dump(logr_model, open('logr_model.sav', 'wb'))
 
 
+print("Creating combined (text and keyword) model")
 
 
-	
+class ItemSelector(BaseEstimator, TransformerMixin):
+	def __init__(self, key):
+		self.key = key
+	def fit(self, x, y=None):
+		return self
+	def transform(self, data_dict):
+		return data_dict[self.key]
+
+
+prediction_pipeline = Pipeline([
+        ('union', FeatureUnion(
+          transformer_list=[
+            ('text', Pipeline([
+              ('selector', ItemSelector(key='text')),
+              ('one-hot', CountVectorizer(tokenizer=text_pipeline_spacy, binary=True)), 
+              ])),
+            ('keyword', Pipeline([
+              ('selector', ItemSelector(key='keyword')),
+              ('one-hot', CountVectorizer(tokenizer=text_pipeline_spacy, binary=True)), 
+              ])),
+        ])
+        )
+    ])
+
+
+
+one_hot_train_features = prediction_pipeline.fit_transform(train_data)
+one_hot_validation_features = prediction_pipeline.transform(validation_data)
+
+lr = LogisticRegression(solver='saga')
+combined_model = lr.fit(one_hot_train_features,train_labels)
+pickle.dump(combined_model, open('combined_model.sav', 'wb'))
+pickle.dump(one_hot_validation_features, open('one_hot_validation_features.sav', 'wb'))
+
+
 
