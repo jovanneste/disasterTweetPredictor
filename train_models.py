@@ -20,7 +20,7 @@ print("Loading data...")
 train_data = pd.read_csv('train.csv')
 test_data = pd.read_csv('test.csv')
 
-
+per_train = float(input("Training data split (0-1): "))
 
 train_data = train_data.replace(np.nan,' ',regex=True)
 
@@ -31,7 +31,7 @@ random_training_data = train_data.sample(frac=1)
 review_limit = min(400000, len(random_training_data))
 random_training_data = random_training_data.iloc[:review_limit, :]
 
-train_split = int(len(random_training_data)*0.8)
+train_split = int(len(random_training_data)*per_train)
 train_data = random_training_data.iloc[:train_split, :]
 validation_data = random_training_data.iloc[train_split:, :]
 
@@ -42,7 +42,7 @@ number_positive_train = sum(train_data['target'] == 1)
 number_positive_validation = sum(validation_data['target'] == 1)
 
 print('Training set contains %0.0f%% positive reviews' % (100*number_positive_train/len(train_data)))
-print('Validation set contains %0.0f%% positive reviews' % (100*number_positive_validation/len(validation_data)))
+#print('Validation set contains %0.0f%% positive reviews' % (100*number_positive_validation/len(validation_data)))
 
 
 
