@@ -7,11 +7,14 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import FeatureUnion
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 from sklearn.base import BaseEstimator, TransformerMixin
 
 import pickle
 import numpy as np
+
+from scipy.sparse import hstack
 
 
 
@@ -34,6 +37,7 @@ random_training_data = random_training_data.iloc[:review_limit, :]
 train_split = int(len(random_training_data)*per_train)
 train_data = random_training_data.iloc[:train_split, :]
 validation_data = random_training_data.iloc[train_split:, :]
+pickle.dump(validation_data, open('validation_data.sav', 'wb'))
 
 print('Training set contains {:d} reviews.'.format(len(train_data)))
 print('Vadlidation set contains {:d} reviews.'.format(len(validation_data)))
@@ -42,7 +46,8 @@ number_positive_train = sum(train_data['target'] == 1)
 number_positive_validation = sum(validation_data['target'] == 1)
 
 print('Training set contains %0.0f%% positive reviews' % (100*number_positive_train/len(train_data)))
-#print('Validation set contains %0.0f%% positive reviews' % (100*number_positive_validation/len(validation_data)))
+if (len(validation_data)!=0):
+	print('Validation set contains %0.0f%% positive reviews' % (100*number_positive_validation/len(validation_data)))
 
 
 
@@ -63,19 +68,51 @@ def text_pipeline_spacy(text):
 print("Training models...")
 
 
-one_hot_vectorizer = CountVectorizer(tokenizer=text_pipeline_spacy, binary=True)
 
-train_features = one_hot_vectorizer.fit_transform(train_data['text'])
+#one_hot_vectorizer = CountVectorizer(tokenizer=text_pipeline_spacy, binary=True)
+
+#train_features = one_hot_vectorizer.fit_transform(train_data['text'])
 train_labels = train_data['target']
 
-test_features = one_hot_vectorizer.transform(test_data['text'])
+#test_features = one_hot_vectorizer.transform(test_data['text'])
 
-validation_features = one_hot_vectorizer.transform(validation_data['text'])
+#validation_features = one_hot_vectorizer.transform(validation_data['text'])
+
+word_vectorizer = TfidfVectorizer(
+    sublinear_tf=True,
+    strip_accents='unicode',
+    analyzer='word',
+    token_pattern=r'\w{1,}',
+    stop_words='english',
+    ngram_range=(1, 1),
+    max_features=10000)
+
+word_vectorizer.fit(train_data['text'])
+train_word_features = word_vectorizer.transform(train_data['text'])
+test_word_features = word_vectorizer.transform(test_data['text'])
+#validation_word_features = word_vectorizer.transform(validation_data['text'])
 
 
-pickle.dump(validation_data, open('validation_data.sav', 'wb'))
-pickle.dump(validation_features, open('validation_features.sav', 'wb'))
+char_vectorizer = TfidfVectorizer(
+    sublinear_tf=True,
+    strip_accents='unicode',
+    analyzer='char',
+    stop_words='english',
+    ngram_range=(2, 6),
+    max_features=50000)
 
+char_vectorizer.fit(train_data)
+train_char_features = char_vectorizer.transform(train_data['text'])
+test_char_features = char_vectorizer.transform(test_data['text'])
+#validation_char_features = char_vectorizer.transform(validation_data['text'])
+
+train_features = hstack([train_char_features, train_word_features])
+test_features = hstack([test_char_features, test_word_features])
+#validation_features = hstack([validation_char_features, validation_word_features])
+
+
+
+#pickle.dump(validation_features, open('validation_features.sav', 'wb'))
 pickle.dump(test_features, open('test_features.sav', 'wb'))
 pickle.dump(test_data, open('test_labels.sav', 'wb'))
 
@@ -109,8 +146,8 @@ prediction_pipeline = Pipeline([
               ('selector', ItemSelector(key='text')),
               ('one-hot', CountVectorizer(tokenizer=text_pipeline_spacy, binary=True)), 
               ])),
-            ('keyword', Pipeline([
-              ('selector', ItemSelector(key='keyword')),
+            ('location', Pipeline([
+              ('selector', ItemSelector(key='location')),
               ('one-hot', CountVectorizer(tokenizer=text_pipeline_spacy, binary=True)), 
               ])),
         ])
@@ -126,6 +163,7 @@ lr = LogisticRegression(solver='saga')
 combined_model = lr.fit(one_hot_train_features,train_labels)
 pickle.dump(combined_model, open('combined_model.sav', 'wb'))
 pickle.dump(one_hot_validation_features, open('one_hot_validation_features.sav', 'wb'))
-
+print("one hot train features")
+pickle.dump(one_hot_train_features, open('one_hot_train_features.sav', 'wb'))
 
 
